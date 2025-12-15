@@ -1,0 +1,29 @@
+{
+  "name": "adatabase",
+  "version": "1.0.0",
+  "description": "- **Durée :** 1 semaine\r- **Type de projet :** seul / pair programming\r- **Nom du repo :** `adatabase-[nom_github]`",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+  "dev": "nodemon src/server.js",
+  "start": "node src/server.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yannick-lebec/adatabase.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yannick-lebec/adatabase/issues"
+  },
+  "homepage": "https://github.com/yannick-lebec/adatabase#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3"
+  }
+}
