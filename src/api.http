@@ -1,8 +1,75 @@
-### Health
-GET http://localhost:3000/
+### GET all
+GET http://localhost:3000/resources
 
-### Users
-GET http://localhost:3000/users
+### GET one
+GET http://localhost:3000/resources/1
 
-### Tables
-GET http://localhost:3000/tables
+### POST create
+POST http://localhost:3000/resources
+Content-Type: application/json
+
+{
+  "title": "Intro ADA",
+  "url": "https://ada.dev",
+  "description": "Guide",
+  "theme_id": 1,
+  "type": "guide",
+  "is_ada": false
+}
+
+### PUT update
+PUT http://localhost:3000/resources/1
+Content-Type: application/json
+
+{
+  "title": "Intro ADA (maj)"
+}
+
+### DELETE
+DELETE http://localhost:3000/resources/1
+
+### THEMES
+GET http://localhost:3000/themes
+GET http://localhost:3000/themes/1
+
+POST http://localhost:3000/themes
+Content-Type: application/json
+
+{ "name": "Testing", "description": "tests" }
+
+PUT http://localhost:3000/themes/1
+Content-Type: application/json
+
+{ "name": "Frontend (maj)" }
+
+DELETE http://localhost:3000/themes/4
+
+
+### SKILLS
+GET http://localhost:3000/skills
+GET http://localhost:3000/skills/1
+
+POST http://localhost:3000/skills
+Content-Type: application/json
+
+{ "name": "TypeScript" }
+
+PUT http://localhost:3000/skills/1
+Content-Type: application/json
+
+{ "name": "JavaScript (maj)" }
+
+DELETE http://localhost:3000/skills/5
+
+
+### RESOURCES_SKILLS (pivot)
+GET http://localhost:3000/resources-skills
+
+POST http://localhost:3000/resources-skills
+Content-Type: application/json
+
+{ "resource_id": 1, "skill_id": 3 }
+
+GET http://localhost:3000/resources-skills/1/3
+
+DELETE http://localhost:3000/resources-skills/1/3

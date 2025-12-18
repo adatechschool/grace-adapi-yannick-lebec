@@ -1,9 +1,20 @@
 import express from "express";
-import pool from "./db.js";
-import usersRouter from "./routes/users.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import resourcesRouter from "./routes/resources.js";
+import themesRouter from "./routes/themes.js";
+import skillsRouter from "./routes/skills.js";
+import resourcesSkillsRouter from "./routes/resources_skills.js";
 
 const app = express();
 app.use(express.json());
+
+// chemins pour servir /public en ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// servir les fichiers statiques
+app.use(express.static(path.join(__dirname, "../public")));
 
 // logger
 app.use((req, _res, next) => {
@@ -11,30 +22,16 @@ app.use((req, _res, next) => {
   next();
 });
 
-// route racine
-app.get("/", (_req, res) => res.json({ message: "API OK ✅" }));
+// routers API
+app.use("/resources", resourcesRouter);
+app.use("/themes", themesRouter);
+app.use("/skills", skillsRouter);
+app.use("/resources-skills", resourcesSkillsRouter);
 
-// ✅ branchement du router users
-app.use("/users", usersRouter);
-
-// ton endpoint tables (si tu veux le garder)
-app.get("/tables", async (_req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erreur lors de la récupération des tables" });
-  }
+// 404 - image
+app.use((_req, res) => {
+  res.status(404).sendFile(path.join(__dirname, "../public/erreur404.jpg"));
 });
 
-// 404
-app.use((_req, res) => res.status(404).json({ error: "Route not found" }));
-
 const PORT = Number(process.env.PORT ?? 3000);
-app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));

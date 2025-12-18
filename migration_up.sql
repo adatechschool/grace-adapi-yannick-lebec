@@ -33,3 +33,6 @@ CREATE TABLE resources_skills (
     CONSTRAINT fk_rs_skill    FOREIGN KEY (skill_id)  REFERENCES skills(id)    ON DELETE CASCADE
 );
 
+ALTER TABLE resources_skills
+ADD CONSTRAINT resources_skills_unique UNIQUE (resource_id, skill_id);
+
