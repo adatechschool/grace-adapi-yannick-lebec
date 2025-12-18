@@ -3,7 +3,28 @@ import pool from "../db.js";
 
 const router = Router();
 
-// GET /resources-skills
+/**
+ * @swagger
+ * tags:
+ *   - name: Resources-Skills
+ *     description: Gestion des liens entre ressources et compétences
+ */
+
+/**
+ * @swagger
+ * /resources-skills:
+ *   get:
+ *     summary: Récupère tous les liens ressources-compétences
+ *     tags: [Resources-Skills]
+ *     responses:
+ *       200:
+ *         description: Liste des liens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/ResourceSkill' }
+ */
 router.get("/", async (_req, res) => {
   try {
     const { rows } = await pool.query(
@@ -16,7 +37,32 @@ router.get("/", async (_req, res) => {
   }
 });
 
-// GET /resources-skills/:resourceId/:skillId
+/**
+ * @swagger
+ * /resources-skills/{resourceId}/{skillId}:
+ *   get:
+ *     summary: Récupère un lien ressource-compétence
+ *     tags: [Resources-Skills]
+ *     parameters:
+ *       - in: path
+ *         name: resourceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: skillId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Lien trouvé
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ResourceSkill' }
+ *       400:
+ *         description: IDs invalides
+ *       404:
+ *         description: Lien introuvable
+ */
 router.get("/:resourceId/:skillId", async (req, res) => {
   const resourceId = Number(req.params.resourceId);
   const skillId = Number(req.params.skillId);
@@ -38,8 +84,28 @@ router.get("/:resourceId/:skillId", async (req, res) => {
   }
 });
 
-// POST /resources-skills
-// body: { "resource_id": 1, "skill_id": 2 }
+/**
+ * @swagger
+ * /resources-skills:
+ *   post:
+ *     summary: Crée un lien entre une ressource et une compétence
+ *     tags: [Resources-Skills]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/ResourceSkillCreate' }
+ *     responses:
+ *       201:
+ *         description: Lien créé
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ResourceSkill' }
+ *       200:
+ *         description: Lien déjà existant
+ *       400:
+ *         description: IDs invalides
+ */
 router.post("/", async (req, res) => {
   const resourceId = Number(req.body?.resource_id);
   const skillId = Number(req.body?.skill_id);
@@ -67,7 +133,29 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE /resources-skills/:resourceId/:skillId
+/**
+ * @swagger
+ * /resources-skills/{resourceId}/{skillId}:
+ *   delete:
+ *     summary: Supprime un lien ressource-compétence
+ *     tags: [Resources-Skills]
+ *     parameters:
+ *       - in: path
+ *         name: resourceId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: path
+ *         name: skillId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Lien supprimé
+ *       400:
+ *         description: IDs invalides
+ *       404:
+ *         description: Lien introuvable
+ */
 router.delete("/:resourceId/:skillId", async (req, res) => {
   const resourceId = Number(req.params.resourceId);
   const skillId = Number(req.params.skillId);

@@ -3,7 +3,36 @@ import pool from "../db.js";
 
 const router = Router();
 
-// GET /resources  -> toutes les ressources
+const ALLOWED_RESOURCE_TYPES = new Set(["guide", "video", "exercise", "project"]);
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Resources
+ *     description: Gestion des ressources
+ */
+
+/**
+ * @swagger
+ * /resources:
+ *   get:
+ *     summary: Récupère toutes les ressources
+ *     tags: [Resources]
+ *     responses:
+ *       200:
+ *         description: Liste des ressources
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Resource'
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ */
 router.get("/", async (_req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM resources ORDER BY id");
@@ -14,7 +43,41 @@ router.get("/", async (_req, res) => {
   }
 });
 
-// GET /resources/:id -> une ressource
+/**
+ * @swagger
+ * /resources/{id}:
+ *   get:
+ *     summary: Récupère une ressource par ID
+ *     tags: [Resources]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Ressource trouvée
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Resource' }
+ *       400:
+ *         description: ID invalide
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *             example: { error: "Invalid id" }
+ *       404:
+ *         description: Ressource introuvable
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *             example: { error: "Resource not found" }
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ */
 router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
@@ -29,13 +92,47 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST /resources -> créer une ressource (data venant du body)
+/**
+ * @swagger
+ * /resources:
+ *   post:
+ *     summary: Crée une ressource
+ *     tags: [Resources]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/ResourceCreate' }
+ *     responses:
+ *       201:
+ *         description: Ressource créée
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Resource' }
+ *       400:
+ *         description: Body invalide (champs requis manquants / type invalide)
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ */
 router.post("/", async (req, res) => {
   const { title, url, description = null, theme_id, type, is_ada } = req.body ?? {};
 
   if (!title || !url || theme_id === undefined || !type || typeof is_ada !== "boolean") {
     return res.status(400).json({
       error: "Body attendu: { title, url, description?, theme_id, type, is_ada }",
+    });
+  }
+
+  // ✅ Validation enum AVANT Postgres (évite l'erreur enum.c)
+  if (!ALLOWED_RESOURCE_TYPES.has(type)) {
+    return res.status(400).json({
+      error: `Invalid type. Allowed: ${[...ALLOWED_RESOURCE_TYPES].join(", ")}`,
     });
   }
 
@@ -56,12 +153,56 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT /resources/:id -> modifier une ressource
+/**
+ * @swagger
+ * /resources/{id}:
+ *   put:
+ *     summary: Met à jour une ressource (partiel)
+ *     tags: [Resources]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/ResourceUpdate' }
+ *     responses:
+ *       200:
+ *         description: Ressource mise à jour
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Resource' }
+ *       400:
+ *         description: ID invalide ou type invalide
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *       404:
+ *         description: Ressource introuvable
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ */
 router.put("/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
 
   const { title, url, description, theme_id, type, is_ada } = req.body ?? {};
+
+  // ✅ si "type" fourni, on le valide
+  if (type !== undefined && !ALLOWED_RESOURCE_TYPES.has(type)) {
+    return res.status(400).json({
+      error: `Invalid type. Allowed: ${[...ALLOWED_RESOURCE_TYPES].join(", ")}`,
+    });
+  }
 
   try {
     const { rows, rowCount } = await pool.query(
@@ -97,7 +238,43 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE /resources/:id -> supprimer (et supprimer les liens)
+/**
+ * @swagger
+ * /resources/{id}:
+ *   delete:
+ *     summary: Supprime une ressource (et ses liens resources_skills)
+ *     tags: [Resources]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Ressource supprimée
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string, example: "Resource 1 supprimée ✅" }
+ *                 resource: { $ref: '#/components/schemas/Resource' }
+ *       400:
+ *         description: ID invalide
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *       404:
+ *         description: Ressource introuvable
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ *       500:
+ *         description: Erreur serveur
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Error' }
+ */
 router.delete("/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return res.status(400).json({ error: "Invalid id" });
